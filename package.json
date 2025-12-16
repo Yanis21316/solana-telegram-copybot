@@ -1,0 +1,15 @@
+{
+  "name": "solana-telegram-copybot",
+  "version": "1.0.0",
+  "description": "Telegram bot Solana copy trading",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.95.0",
+    "axios": "^1.6.0",
+    "dotenv": "^16.4.5",
+    "node-telegram-bot-api": "^0.66.0"
+  }
+}
