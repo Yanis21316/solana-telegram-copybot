@@ -1,27 +1,54 @@
 import 'dotenv/config';
 import { Telegraf } from 'telegraf';
 import fetch from 'node-fetch';
+import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { CONFIG } from './config.js';
 
-let balanceUSD = CONFIG.VIRTUAL_BALANCE_USD;
-let pnlUSD = 0;
+/* ============================
+   CONNEXIONS SOLANA
+============================ */
+const connectionHttp = new Connection(
+  process.env.SOLANA_RPC_HTTP,
+  { commitment: 'processed' }
+);
 
+const connectionWs = new Connection(
+  process.env.SOLANA_RPC_HTTP,
+  {
+    wsEndpoint: process.env.SOLANA_RPC_WSS,
+    commitment: 'processed'
+  }
+);
+
+/* ============================
+   BOT TELEGRAM
+============================ */
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
+let virtualBalanceUSD = CONFIG.TEST_BALANCE_USD;
+let pnlUSD = 0;
+
+/* ============================
+   PRIX SOL
+============================ */
 async function getSolPrice() {
   const res = await fetch(process.env.SOL_PRICE_API);
   const data = await res.json();
   return data.solana.usd;
 }
 
+/* ============================
+   START
+============================ */
 bot.start(async (ctx) => {
   const solPrice = await getSolPrice();
+
   ctx.reply(
 `🤖 *Solana Copy Bot*
 
 Mode: ${process.env.BOT_MODE}
-Balance test: ${balanceUSD.toFixed(2)} $
-SOL Price: ${solPrice} $
+Balance TEST: ${virtualBalanceUSD.toFixed(2)} $
+Prix SOL: ${solPrice} $
 
 Choisis une option 👇`,
     {
@@ -37,8 +64,11 @@ Choisis une option 👇`,
   );
 });
 
+/* ============================
+   ACTIONS
+============================ */
 bot.action('test', (ctx) => {
-  ctx.reply('🧪 Mode TEST activé (100€ fictifs)');
+  ctx.reply('🧪 Mode TEST activé\nCapital fictif : 100 $');
 });
 
 bot.action('live', (ctx) => {
@@ -47,15 +77,27 @@ bot.action('live', (ctx) => {
 
 bot.action('pnl', async (ctx) => {
   const solPrice = await getSolPrice();
+
   ctx.reply(
 `📊 *PnL*
 
-Balance: ${balanceUSD.toFixed(2)} $
+Balance: ${virtualBalanceUSD.toFixed(2)} $
 PnL: ${pnlUSD.toFixed(2)} $
-SOL Price: ${solPrice} $`,
+Prix SOL: ${solPrice} $`,
     { parse_mode: 'Markdown' }
   );
 });
 
+/* ============================
+   EXEMPLE LISTENER WSS
+============================ */
+connectionWs.onLogs(
+  'all',
+  (logs) => {
+    // Ici plus tard : détection wallet, pumpfun, etc.
+  },
+  'processed'
+);
+
 bot.launch();
-console.log('🤖 Bot Telegram lancé');
+console.log('🤖 Bot lancé (HTTPS + WSS)');
